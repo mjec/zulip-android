@@ -69,8 +69,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             db.execSQL("DROP TABLE " + name);
         }
 
-        c.close();
-
         db.setTransactionSuccessful();
         db.endTransaction();
         db.execSQL("VACUUM;");
@@ -80,7 +78,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         }
 
         onCreate(db);
-        db.close();
     }
 
     /**
@@ -90,7 +87,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource,
-                          int oldVersion, int newVersion) {
+            int oldVersion, int newVersion) {
         resetDatabase(db);
     }
 
@@ -100,9 +97,18 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
+     * Close the database connections and clear any cached DAOs.
+     */
+    @Override
+    public void close() {
+        super.close();
+    }
+
+    /**
      * Escape LIKE wildcards with a backslash. Must also use ESCAPE clause
-     *
-     * @param likeClause string to escape
+     * 
+     * @param likeClause
+     *            string to escape
      * @return Escaped string
      */
     public static String likeEscape(String likeClause) {

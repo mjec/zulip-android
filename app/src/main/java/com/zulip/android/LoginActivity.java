@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,12 +24,12 @@ import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.zulip.android.ZulipAsyncPushTask.AsyncTaskCompleteListener;
 
-public class LoginActivity extends Activity implements View.OnClickListener,
-        OnConnectionFailedListener {
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener,
+        GoogleApiClient.OnConnectionFailedListener {
     private static final int REQUEST_ACCOUNT_PICKER = 2;
     private static final int REQUEST_CODE_RESOLVE_ERR = 9000;
 
@@ -83,6 +85,10 @@ public class LoginActivity extends Activity implements View.OnClickListener,
         connectionProgressDialog = new ProgressDialog(this);
         connectionProgressDialog.setMessage("Signing in...");
         findViewById(R.id.sign_in_button).setOnClickListener(this);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("Login");
+        setSupportActionBar(toolbar);
 
     }
 
@@ -177,7 +183,8 @@ public class LoginActivity extends Activity implements View.OnClickListener,
                 public void onTaskFailure(String result) {
                     // Invalidate the token and try again, unless the user we
                     // are authenticating as is not registered or is disabled.
-                    if (!loginTask.userDefinitelyInvalid) {
+                    if (loginTask.userDefinitelyInvalid == false) {
+                        GoogleAuthUtil.invalidateToken(that, token);
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -215,7 +222,7 @@ public class LoginActivity extends Activity implements View.OnClickListener,
                     connectionProgressDialog.dismiss();
                     Toast.makeText(
                             that,
-                            "Google Apps login failed for unknown reasons, please contact your distributor.",
+                            "Google Apps login not supported at this time, please contact support@zulip.com.",
                             Toast.LENGTH_LONG).show();
                     findViewById(R.id.sign_in_button).setEnabled(false);
                 }

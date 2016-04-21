@@ -22,7 +22,7 @@ public class NarrowFilterAllPMs implements NarrowFilter {
 
     NarrowFilterAllPMs(Person person) {
         this.person = person;
-        this.recipient = Message.recipientList(new Person[]{person});
+        this.recipient = Message.recipientList(new Person[] { person });
     }
 
     private NarrowFilterAllPMs(String recipient) {
@@ -62,7 +62,11 @@ public class NarrowFilterAllPMs implements NarrowFilter {
 
     @Override
     public boolean matches(Message msg) {
-        return msg.getType() == MessageType.PRIVATE_MESSAGE;
+        if (msg.getType() == MessageType.PRIVATE_MESSAGE) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

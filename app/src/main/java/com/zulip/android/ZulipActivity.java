@@ -1,19 +1,11 @@
 package com.zulip.android;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,11 +21,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -44,13 +39,20 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.SearchView;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
+// import com.crashlytics.android.Crashlytics;
 import com.j256.ormlite.android.AndroidDatabaseResults;
 
-public class ZulipActivity extends FragmentActivity implements
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+// import io.fabric.sdk.android.Fabric;
+
+public class ZulipActivity extends AppCompatActivity implements
         MessageListFragment.Listener {
 
     ZulipApp app;
@@ -147,9 +149,7 @@ public class ZulipActivity extends FragmentActivity implements
     protected RefreshableCursorAdapter streamsAdapter;
     protected RefreshableCursorAdapter peopleAdapter;
 
-    /**
-     * Called when the activity is first created.
-     */
+    /** Called when the activity is first created. */
     @SuppressLint("NewApi")
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
@@ -159,7 +159,7 @@ public class ZulipActivity extends FragmentActivity implements
         if (Build.HARDWARE.contains("goldfish")) {
             Log.i("hardware", "running in emulator");
         } else {
-            Crashlytics.start(this);
+            // Fabric.with(this, new Crashlytics());
         }
 
         app = (ZulipApp) getApplicationContext();
@@ -180,6 +180,9 @@ public class ZulipActivity extends FragmentActivity implements
         this.logged_in = true;
 
         setContentView(R.layout.main);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout,
@@ -247,8 +250,9 @@ public class ZulipActivity extends FragmentActivity implements
 
                 allPrivateMessages.addRow(row);
 
-                return new MergeCursor(new Cursor[]{
+                MergeCursor mergeCursor = new MergeCursor(new Cursor[]{
                         allPrivateMessages, sortedPeopleCursor});
+                return mergeCursor;
 
             }
 
@@ -323,10 +327,10 @@ public class ZulipActivity extends FragmentActivity implements
         };
         statusUpdateHandler.post(statusUpdateRunnable);
 
-        if (android.os.Build.VERSION.SDK_INT >= 11 && getActionBar() != null) {
+        if (android.os.Build.VERSION.SDK_INT >= 11 && getSupportActionBar() != null) {
             // the AB is unavailable when invoked from JUnit
-            getActionBar().setDisplayHomeAsUpEnabled(true);
-            getActionBar().setHomeButtonEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
         }
 
         homeList = MessageListFragment.newInstance(null);
@@ -400,17 +404,17 @@ public class ZulipActivity extends FragmentActivity implements
 
         if (filter == null) {
             if (android.os.Build.VERSION.SDK_INT >= 11) {
-                getActionBar().setTitle("Zulip");
-                getActionBar().setSubtitle(null);
+                getSupportActionBar().setTitle("Zulip");
+                getSupportActionBar().setSubtitle(null);
             }
             this.drawerToggle.setDrawerIndicatorEnabled(true);
         } else {
             String title = list.filter.getTitle();
             if (android.os.Build.VERSION.SDK_INT >= 11) {
                 if (title != null) {
-                    getActionBar().setTitle(title);
+                    getSupportActionBar().setTitle(title);
                 }
-                getActionBar().setSubtitle(list.filter.getSubtitle());
+                getSupportActionBar().setSubtitle(list.filter.getSubtitle());
             }
             this.drawerToggle.setDrawerIndicatorEnabled(false);
         }
@@ -432,7 +436,10 @@ public class ZulipActivity extends FragmentActivity implements
         drawerToggle.syncState();
     }
 
-    public boolean onPrepareOptionsMenu(Menu menu) {
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.options, menu);
+
         /*
          * We want to show a menu only when we're logged in, so this function is
          * called by both Android and our own app when we encounter state
@@ -451,14 +458,25 @@ public class ZulipActivity extends FragmentActivity implements
             inflater.inflate(R.menu.options, menu);
         }
 
-        if (this.logged_in && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            // Get the SearchView and set the searchable configuration
-            SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-            final MenuItem searchMenuItem = menu.findItem(R.id.search);
-            SearchView searchView = (SearchView) searchMenuItem.getActionView();
-            // Assumes current activity is the searchable activity
-            searchView.setSearchableInfo(searchManager
-                    .getSearchableInfo(getComponentName()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+
+            final SearchManager searchManager =
+                    (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+//        SearchView searchView =(SearchView) menu.findItem(R.id.search).getActionView();
+
+
+            final MenuItem mSearchMenuItem = menu.findItem(R.id.search);
+            final SearchView searchView =
+                    (SearchView) MenuItemCompat.getActionView(mSearchMenuItem);
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(
+                    new ComponentName(getApplicationContext(),
+                            ZulipActivity.class)));
+
+
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+
+            searchView.setIconifiedByDefault(false);
 
             searchView
                     .setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -466,7 +484,7 @@ public class ZulipActivity extends FragmentActivity implements
                         public boolean onQueryTextSubmit(String s) {
                             doNarrow(new NarrowFilterSearch(s));
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                                searchMenuItem.collapseActionView();
+                                mSearchMenuItem.collapseActionView();
                             }
                             return true;
                         }
@@ -497,7 +515,7 @@ public class ZulipActivity extends FragmentActivity implements
                         FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 break;
             case R.id.search:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Search Zulip");
                     final EditText editText = new EditText(this);

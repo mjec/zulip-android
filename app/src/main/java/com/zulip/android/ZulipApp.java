@@ -120,7 +120,7 @@ public class ZulipApp extends Application {
 
     /**
      * Determines the server URI applicable for the user.
-     *
+     * 
      * @return either the production or staging server's URI
      */
     public String getServerURI() {
@@ -156,7 +156,7 @@ public class ZulipApp extends Application {
         Editor ed = this.settings.edit();
         ed.putString("email", this.getEmail());
         ed.putString("api_key", api_key);
-        ed.apply();
+        ed.commit();
         afterLogin();
     }
 
@@ -164,7 +164,7 @@ public class ZulipApp extends Application {
         Editor ed = this.settings.edit();
         ed.remove("email");
         ed.remove("api_key");
-        ed.apply();
+        ed.commit();
         this.api_key = null;
         setEventQueueId(null);
     }

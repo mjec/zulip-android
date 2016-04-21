@@ -27,6 +27,7 @@ public class AsyncGetOldMessages extends ZulipAsyncPushTask {
     private int before;
     private int afterAnchor;
     private int after;
+    AsyncGetOldMessages that = this;
 
     boolean recursedAbove = false;
     boolean recursedBelow = false;
@@ -43,13 +44,16 @@ public class AsyncGetOldMessages extends ZulipAsyncPushTask {
     /**
      * Get messages surrounding a specified anchor message ID, inclusive of both
      * endpoints and the anchor.
-     *
-     * @param anchor Message ID of the message to fetch around
-     * @param before Number of messages after the anchor to return
-     * @param after  Number of messages before the anchor to return
+     * 
+     * @param anchor
+     *            Message ID of the message to fetch around
+     * @param before
+     *            Number of messages after the anchor to return
+     * @param after
+     *            Number of messages before the anchor to return
      */
     public final void execute(int anchor, LoadPosition pos, int before,
-                              int after, NarrowFilter filter) {
+            int after, NarrowFilter filter) {
         this.mainAnchor = anchor;
         this.before = before;
         this.afterAnchor = mainAnchor + 1;
@@ -176,27 +180,27 @@ public class AsyncGetOldMessages extends ZulipAsyncPushTask {
     }
 
     protected void recurse(LoadPosition position, int amount, MessageRange rng,
-                           int anchor) {
+            int anchor) {
         AsyncGetOldMessages task = new AsyncGetOldMessages(listener);
         task.rng = rng;
         switch (position) {
-            case ABOVE:
-                recursedAbove = true;
-                task.execute(anchor, position, amount, 0, filter);
-                break;
-            case BELOW:
-                task.execute(anchor, position, 0, amount, filter);
-                recursedBelow = true;
-                break;
-            default:
-                Log.wtf("AGOM", "recurse passed unexpected load position!");
-                break;
+        case ABOVE:
+            recursedAbove = true;
+            task.execute(anchor, position, amount, 0, filter);
+            break;
+        case BELOW:
+            task.execute(anchor, position, 0, amount, filter);
+            recursedBelow = true;
+            break;
+        default:
+            Log.wtf("AGOM", "recurse passed unexpected load position!");
+            break;
         }
 
     }
 
     protected boolean fetchMessages(int anchor, int num_before, int num_after,
-                                    String[] params) {
+            String[] params) {
         this.setProperty("anchor", Integer.toString(anchor));
         this.setProperty("num_before", Integer.toString(num_before));
         this.setProperty("num_after", Integer.toString(num_after));
@@ -285,7 +289,7 @@ public class AsyncGetOldMessages extends ZulipAsyncPushTask {
                 noFurtherMessages = true;
             }
 
-            listener.onMessages(receivedMessages.toArray(new Message[receivedMessages.size()]),
+            listener.onMessages(receivedMessages.toArray(new Message[0]),
                     position, recursedAbove, recursedBelow, noFurtherMessages);
         } else {
             listener.onMessageError(position);
